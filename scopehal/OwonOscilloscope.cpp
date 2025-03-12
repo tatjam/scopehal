@@ -52,12 +52,12 @@ unsigned int OwonOscilloscope::GetInstrumentTypes() const
 	return Instrument::INST_OSCILLOSCOPE;
 }
 
-uint32_t OwonOscilloscope::GetInstrumentTypesForChannel(size_t i) const
+uint32_t OwonOscilloscope::GetInstrumentTypesForChannel(size_t) const
 {
 	return Instrument::INST_OSCILLOSCOPE;
 }
 
-vector<OscilloscopeChannel::CouplingType> OwonOscilloscope::GetAvailableCouplings(size_t i)
+vector<OscilloscopeChannel::CouplingType> OwonOscilloscope::GetAvailableCouplings(size_t)
 {
 	vector<OscilloscopeChannel::CouplingType> ret;
 	ret.push_back(OscilloscopeChannel::COUPLE_DC_1M);
@@ -66,12 +66,12 @@ vector<OscilloscopeChannel::CouplingType> OwonOscilloscope::GetAvailableCoupling
 	return ret;
 }
 
-unsigned int OwonOscilloscope::GetChannelBandwidthLimit(size_t i)
+unsigned int OwonOscilloscope::GetChannelBandwidthLimit(size_t)
 {
 	return 0;
 }
 
-void OwonOscilloscope::SetChannelBandwidthLimit(size_t i, unsigned int limit_mhz)
+void OwonOscilloscope::SetChannelBandwidthLimit(size_t, unsigned int)
 {
 }
 
@@ -97,7 +97,7 @@ bool OwonOscilloscope::IsInterleaving()
 	return false;
 }
 
-bool OwonOscilloscope::SetInterleaving(bool combine)
+bool OwonOscilloscope::SetInterleaving(bool)
 {
 	return false;
 }
@@ -109,7 +109,7 @@ std::vector<Oscilloscope::AnalogBank> OwonOscilloscope::GetAnalogBanks()
 	return banks;
 }
 
-Oscilloscope::AnalogBank OwonOscilloscope::GetAnalogBank(size_t channel)
+Oscilloscope::AnalogBank OwonOscilloscope::GetAnalogBank(size_t)
 {
 	AnalogBank bank;
 	return bank;
@@ -120,18 +120,18 @@ bool OwonOscilloscope::IsADCModeConfigurable()
 	return false;
 }
 
-std::vector<std::string> OwonOscilloscope::GetADCModeNames(size_t channel)
+std::vector<std::string> OwonOscilloscope::GetADCModeNames(size_t)
 {
 	vector<string> ret;
 	ret.push_back("8 Bit");
 
 	return ret;
 }
-size_t OwonOscilloscope::GetADCMode(size_t channel)
+size_t OwonOscilloscope::GetADCMode(size_t)
 {
 	return 0;
 }
 
-void OwonOscilloscope::SetADCMode(size_t channel, size_t mode)
+void OwonOscilloscope::SetADCMode(size_t, size_t)
 {
 }
