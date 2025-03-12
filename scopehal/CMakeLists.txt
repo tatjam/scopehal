@@ -177,6 +177,7 @@ set(SCOPEHAL_SOURCES
 	OwonXDGFunctionGenerator.cpp
 	OwonXDMMultimeter.cpp
 	PicoOscilloscope.cpp
+	OwonOscilloscope.cpp
 	PicoVNA.cpp
 	RigolFunctionGenerator.cpp
 	RigolOscilloscope.cpp
@@ -218,7 +219,7 @@ set(SCOPEHAL_SOURCES
 	PipelineCacheManager.cpp
 	VulkanFFTPlan.cpp
 	QueueManager.cpp
-	)
+)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	list(APPEND SCOPEHAL_SOURCES
