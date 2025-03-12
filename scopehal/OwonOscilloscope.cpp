@@ -36,3 +36,102 @@
 #include "OwonOscilloscope.h"
 #include "EdgeTrigger.h"
 
+using namespace std;
+
+OwonOscilloscope::OwonOscilloscope(SCPITransport* transport)
+	: SCPIDevice(transport), SCPIInstrument(transport), RemoteBridgeOscilloscope(transport)
+{
+}
+
+OwonOscilloscope::~OwonOscilloscope()
+{
+}
+
+unsigned int OwonOscilloscope::GetInstrumentTypes() const
+{
+	return Instrument::INST_OSCILLOSCOPE;
+}
+
+uint32_t OwonOscilloscope::GetInstrumentTypesForChannel(size_t i) const
+{
+	return Instrument::INST_OSCILLOSCOPE;
+}
+
+vector<OscilloscopeChannel::CouplingType> OwonOscilloscope::GetAvailableCouplings(size_t i)
+{
+	vector<OscilloscopeChannel::CouplingType> ret;
+	ret.push_back(OscilloscopeChannel::COUPLE_DC_1M);
+	ret.push_back(OscilloscopeChannel::COUPLE_AC_1M);
+
+	return ret;
+}
+
+unsigned int OwonOscilloscope::GetChannelBandwidthLimit(size_t i)
+{
+	return 0;
+}
+
+void OwonOscilloscope::SetChannelBandwidthLimit(size_t i, unsigned int limit_mhz)
+{
+}
+
+bool OwonOscilloscope::CanInterleave()
+{
+	return false;
+}
+
+vector<uint64_t> OwonOscilloscope::GetSampleRatesInterleaved()
+{
+	vector<uint64_t> ret = {};
+	return ret;
+}
+
+std::set<Oscilloscope::InterleaveConflict> OwonOscilloscope::GetInterleaveConflicts()
+{
+	set<Oscilloscope::InterleaveConflict> ret;
+	return ret;
+}
+
+bool OwonOscilloscope::IsInterleaving()
+{
+	return false;
+}
+
+bool OwonOscilloscope::SetInterleaving(bool combine)
+{
+	return false;
+}
+
+std::vector<Oscilloscope::AnalogBank> OwonOscilloscope::GetAnalogBanks()
+{
+	vector<AnalogBank> banks;
+	banks.push_back(GetAnalogBank(0));
+	return banks;
+}
+
+Oscilloscope::AnalogBank OwonOscilloscope::GetAnalogBank(size_t channel)
+{
+	AnalogBank bank;
+	return bank;
+}
+
+bool OwonOscilloscope::IsADCModeConfigurable()
+{
+	return false;
+}
+
+std::vector<std::string> OwonOscilloscope::GetADCModeNames(size_t channel)
+{
+	vector<string> ret;
+	ret.push_back("8 Bit");
+
+	return ret;
+}
+size_t OwonOscilloscope::GetADCMode(size_t channel)
+{
+	return 0;
+}
+
+void OwonOscilloscope::SetADCMode(size_t channel, size_t mode)
+{
+}

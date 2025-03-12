@@ -104,6 +104,8 @@
 #include "UartTrigger.h"
 #include "WindowTrigger.h"
 
+#include <OwonOscilloscope.h>
+
 #ifndef _WIN32
 #include <dlfcn.h>
 #include <sys/stat.h>
@@ -242,6 +244,7 @@ void DriverStaticInit()
 	AddDriverClass(DSLabsOscilloscope);
 	AddDriverClass(KeysightDCA);
 	AddDriverClass(PicoOscilloscope);
+	AddDriverClass(OwonOscilloscope);
 	AddDriverClass(RigolOscilloscope);
 	AddDriverClass(RohdeSchwarzOscilloscope);
 	AddDriverClass(RSRTO6Oscilloscope);

@@ -99,84 +99,17 @@ public:
 
 	enum Series
 	{
-		SERIES_3x0xD,   //3000 series (first x=2 or 4 Chan, 2nd x is BW)
-		SERIES_3x0xDMSO,//3000 series+16bits MSO(first x=2 or 4 Chan, 2nd x is BW)
-		SERIES_6403E,	//Lowest end 6000E model has less ADCs
-		SERIES_6x0xE,	//6000 series with 8 bit resolution only
-		SERIES_6x2xE,	//6000 series with FlexRes
-
+		SERIES_VDS1022,
 		SERIES_UNKNOWN	//unknown or invalid model name
 	};
 
-	enum ADCMode
-	{
-		ADC_MODE_8BIT	= 0,
-		ADC_MODE_10BIT	= 1,
-		ADC_MODE_12BIT	= 2
-	};
-
-	bool IsDigitalPodPresent(size_t npod);
-	bool IsDigitalPodActive(size_t npod);
-	bool IsChannelIndexDigital(size_t i);
-	size_t GetDigitalPodIndex(size_t i)
-	{ return (i - m_digitalChannelBase) / 8; }
-	size_t GetDigitalLaneIndex(size_t i)
-	{ return (i - m_digitalChannelBase) % 8; }
-
 protected:
-	void IdentifyHardware();
-
-	//Helpers for determining legal configurations
-	bool Is10BitModeAvailable();
-	bool Is12BitModeAvailable();
-	size_t GetEnabledAnalogChannelCount();
-	size_t GetEnabledDigitalPodCount();
-
-	size_t GetEnabledAnalogChannelCountRange(size_t start, size_t end);
-
-	size_t GetEnabledAnalogChannelCountAToD()
-	{ return GetEnabledAnalogChannelCountRange(0, 3); }
-	size_t GetEnabledAnalogChannelCountEToH()
-	{ return GetEnabledAnalogChannelCountRange(4, 7); }
-	size_t GetEnabledAnalogChannelCountAToB()
-	{ return GetEnabledAnalogChannelCountRange(0, 1); }
-	size_t GetEnabledAnalogChannelCountCToD()
-	{ return GetEnabledAnalogChannelCountRange(2, 3); }
-	size_t GetEnabledAnalogChannelCountEToF()
-	{ return GetEnabledAnalogChannelCountRange(4, 5); }
-	size_t GetEnabledAnalogChannelCountGToH()
-	{ return GetEnabledAnalogChannelCountRange(6, 7); }
-
-	bool CanEnableChannel6000Series8Bit(size_t i);
-	bool CanEnableChannel6000Series10Bit(size_t i);
-	bool CanEnableChannel6000Series12Bit(size_t i);
-
 	std::string GetChannelColor(size_t i);
 
-	//hardware analog channel count, independent of LA option etc
+	//hardware analog channel count
 	size_t m_analogChannelCount;
-	size_t m_digitalChannelBase;
-	size_t m_digitalChannelCount;
 
 	OscilloscopeChannel* m_extTrigChannel;
-	FunctionGeneratorChannel* m_awgChannel;
-
-	//Most Pico API calls are write only, so we have to maintain all state clientside.
-	//This isn't strictly a cache anymore since it's never flushed!
-	std::map<size_t, double> m_channelAttenuations;
-	ADCMode m_adcMode;
-	std::map<int, bool> m_digitalBankPresent;
-	std::map<int, float> m_digitalThresholds;
-	std::map<int, float> m_digitalHysteresis;
-
-	//Function generator state
-	bool m_awgEnabled;
-	float m_awgDutyCycle;
-	float m_awgRange;
-	float m_awgOffset;
-	float m_awgFrequency;
-	FunctionGenerator::WaveShape m_awgShape;
-	FunctionGenerator::OutputImpedance m_awgImpedance;
 
 	Series m_series;
 
