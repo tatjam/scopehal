@@ -40,8 +40,8 @@ class EdgeTrigger;
 class OwonOscilloscope 	: public virtual RemoteBridgeOscilloscope
 {
 public:
-	OwonOscilloscope(SCPITransport* transport);
-	virtual ~OwonOscilloscope();
+	explicit OwonOscilloscope(SCPITransport* transport);
+	~OwonOscilloscope() override;
 
 	//not copyable or assignable
 	OwonOscilloscope(const OwonOscilloscope& rhs) =delete;
@@ -100,6 +100,10 @@ public:
 	enum Series
 	{
 		SERIES_VDS1022,
+		SERIES_VDS2062, // TODO
+		SERIES_VDS2064, // TODO
+		SERIES_VDS3102, // TODO
+		SERIES_VDS3104, // TODO
 		SERIES_UNKNOWN	//unknown or invalid model name
 	};
 

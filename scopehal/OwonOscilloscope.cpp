@@ -56,6 +56,27 @@ uint32_t OwonOscilloscope::GetInstrumentTypesForChannel(size_t) const
 {
 	return Instrument::INST_OSCILLOSCOPE;
 }
+void OwonOscilloscope::FlushConfigCache()
+{
+}
+bool OwonOscilloscope::IsChannelEnabled(size_t i)
+{
+	if(i == m_extTrigChannel->GetIndex())
+		return false;
+
+	lock_guard<recursive_mutex> lock(m_cacheMutex);
+	return m_channelsEnabled[i];
+}
+
+void OwonOscilloscope::EnableChannel(size_t i)
+{
+	RemoteBridgeOscilloscope::EnableChannel(i);
+}
+
+void OwonOscilloscope::DisableChannel(size_t i)
+{
+	RemoteBridgeOscilloscope::DisableChannel(i);
+}
 
 vector<OscilloscopeChannel::CouplingType> OwonOscilloscope::GetAvailableCouplings(size_t)
 {
@@ -64,6 +85,17 @@ vector<OscilloscopeChannel::CouplingType> OwonOscilloscope::GetAvailableCoupling
 	ret.push_back(OscilloscopeChannel::COUPLE_AC_1M);
 
 	return ret;
+}
+
+double OwonOscilloscope::GetChannelAttenuation(size_t)
+{
+	// TODO
+	return 1.0;
+}
+
+void OwonOscilloscope::SetChannelAttenuation(size_t, double)
+{
+	// TODO
 }
 
 unsigned int OwonOscilloscope::GetChannelBandwidthLimit(size_t)
@@ -75,9 +107,79 @@ void OwonOscilloscope::SetChannelBandwidthLimit(size_t, unsigned int)
 {
 }
 
+OscilloscopeChannel* OwonOscilloscope::GetExternalTrigger()
+{
+	// TODO
+	return NULL;
+}
+
+bool OwonOscilloscope::CanEnableChannel(size_t)
+{
+	// TODO: There may be some limitations on higher end models
+	return true;
+}
+
+Oscilloscope::TriggerMode OwonOscilloscope::PollTrigger()
+{
+	// TODO
+	return TRIGGER_MODE_TRIGGERED;
+}
+
+bool OwonOscilloscope::AcquireData()
+{
+	// TODO
+	return false;
+}
+
+bool OwonOscilloscope::IsTriggerArmed()
+{
+	return m_triggerArmed;
+}
+void OwonOscilloscope::PushTrigger()
+{
+	auto et = dynamic_cast<EdgeTrigger*>(m_trigger);
+	if(et)
+		PushEdgeTrigger(et);
+
+	else
+		LogWarning("Unknown trigger type (not an edge)\n");
+
+	ClearPendingWaveforms();
+}
+
 bool OwonOscilloscope::CanInterleave()
 {
 	return false;
+}
+std::vector<uint64_t> OwonOscilloscope::GetSampleRatesNonInterleaved()
+{
+	vector<uint64_t> ret;
+
+	string rates;
+	{
+		lock_guard<recursive_mutex> lock(m_mutex);
+		m_transport->SendCommand("RATES?");
+		rates = m_transport->ReadReply();
+	}
+
+	size_t i=0;
+	while(true)
+	{
+		size_t istart = i;
+		i = rates.find(',', i+1);
+		if(i == string::npos)
+			break;
+
+		auto block = rates.substr(istart, i-istart);
+		uint64_t fs = stoull(block);
+		auto hz = FS_PER_SECOND / fs;
+		ret.push_back(hz);
+
+		//skip the comma
+		i++;
+	}
+
+	return ret;
 }
 
 vector<uint64_t> OwonOscilloscope::GetSampleRatesInterleaved()
@@ -90,6 +192,77 @@ std::set<Oscilloscope::InterleaveConflict> OwonOscilloscope::GetInterleaveConfli
 {
 	set<Oscilloscope::InterleaveConflict> ret;
 	return ret;
+}
+
+std::vector<uint64_t> OwonOscilloscope::GetSampleDepthsNonInterleaved()
+{
+	vector<uint64_t> ret;
+
+	string depths;
+	{
+		lock_guard<recursive_mutex> lock(m_mutex);
+		m_transport->SendCommand("DEPTHS?");
+		depths = m_transport->ReadReply();
+	}
+
+	size_t i = 0;
+	while(true)
+	{
+		size_t istart = i;
+		i = depths.find(',', i + 1);
+		if(i == string::npos)
+			break;
+
+		uint64_t sampleDepth = stoull(depths.substr(istart, i - istart));
+		ret.push_back(sampleDepth);
+
+		//skip the comma
+		i++;
+	}
+
+	return ret;
+}
+std::vector<uint64_t> OwonOscilloscope::GetSampleDepthsInterleaved()
+{
+	vector<uint64_t> ret;
+	return ret;
+}
+
+uint64_t OwonOscilloscope::GetSampleRate()
+{
+	return m_srate;
+}
+uint64_t OwonOscilloscope::GetSampleDepth()
+{
+	return m_mdepth;
+}
+void OwonOscilloscope::SetSampleDepth(uint64_t depth)
+{
+	lock_guard<recursive_mutex> lock(m_mutex);
+	//m_transport->SendCommand(string("DEPTH ") + to_string(depth));
+	m_mdepth = depth;
+}
+void OwonOscilloscope::SetSampleRate(uint64_t rate)
+{
+	m_srate = rate;
+
+	lock_guard<recursive_mutex> lock(m_mutex);
+	m_transport->SendCommand( string("RATE ") + to_string(rate));
+}
+
+void OwonOscilloscope::SetTriggerOffset(int64_t offset)
+{
+	lock_guard<recursive_mutex> lock(m_mutex);
+
+	//Don't allow setting trigger offset beyond the end of the capture
+	int64_t captureDuration = GetSampleDepth() * FS_PER_SECOND / GetSampleRate();
+	m_triggerOffset = min(offset, captureDuration);
+
+	PushTrigger();
+}
+int64_t OwonOscilloscope::GetTriggerOffset()
+{
+	return m_triggerOffset;
 }
 
 bool OwonOscilloscope::IsInterleaving()
@@ -134,4 +307,8 @@ size_t OwonOscilloscope::GetADCMode(size_t)
 
 void OwonOscilloscope::SetADCMode(size_t, size_t)
 {
+}
+std::string OwonOscilloscope::GetDriverNameInternal()
+{
+	return "owon_vds";
 }
