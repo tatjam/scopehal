@@ -41,6 +41,69 @@ using namespace std;
 OwonOscilloscope::OwonOscilloscope(SCPITransport* transport)
 	: SCPIDevice(transport), SCPIInstrument(transport), RemoteBridgeOscilloscope(transport)
 {
+	m_model = "Oscilloscope Simulator";
+	m_vendor = "Antikernel Labs";
+	m_serial = "12345";
+
+	// TODO: For now we assume a 2-channel scope, higher end models have more channels!
+	m_analogChannelCount = 2;
+
+	for(size_t i = 0; i < m_analogChannelCount; i++)
+	{
+		//Hardware name of the channel
+		string chname = "A";
+		chname[0] += i;
+
+		//Create the channel
+		auto chan = new OscilloscopeChannel(
+			this,
+			chname,
+			GetChannelColor(i),
+			Unit(Unit::UNIT_FS),
+			Unit(Unit::UNIT_VOLTS),
+			Stream::STREAM_TYPE_ANALOG,
+			i);
+		m_channels.push_back(chan);
+		m_channelsEnabled[i] = true;
+		chan->SetDefaultDisplayName();
+
+		//Set initial configuration so we have a well-defined instrument state
+		//m_channelAttenuations[i] = 1;
+		SetChannelCoupling(i, OscilloscopeChannel::COUPLE_DC_1M);
+		SetChannelOffset(i, 0,  0);
+		SetChannelVoltageRange(i, 0, 5);
+	}
+
+
+	//Configure the trigger
+	auto trig = new EdgeTrigger(this);
+	trig->SetType(EdgeTrigger::EDGE_RISING);
+	trig->SetLevel(0);
+	trig->SetInput(0, StreamDescriptor(GetOscilloscopeChannel(0)));
+	SetTrigger(trig);
+	PushTrigger();
+	SetTriggerOffset(10 * 1000L * 1000L);
+
+	//Add the external trigger input
+	/*m_extTrigChannel =
+		new OscilloscopeChannel(
+		this,
+		"EX",
+		"#808080",
+		Unit(Unit::UNIT_FS),
+		Unit(Unit::UNIT_COUNTS),
+		Stream::STREAM_TYPE_TRIGGER,
+		m_channels.size());*/
+	//m_channels.push_back(m_extTrigChannel);
+	//m_extTrigChannel->SetDefaultDisplayName();
+
+	//Initialize waveform buffers
+	for(size_t i=0; i<m_analogChannelCount; i++)
+	{
+		m_analogRawWaveformBuffers.push_back(std::make_unique<AcceleratorBuffer<int16_t> >());
+		m_analogRawWaveformBuffers[i]->SetCpuAccessHint(AcceleratorBuffer<int16_t>::HINT_LIKELY);
+		m_analogRawWaveformBuffers[i]->SetGpuAccessHint(AcceleratorBuffer<int16_t>::HINT_LIKELY);
+	}
 }
 
 OwonOscilloscope::~OwonOscilloscope()
@@ -61,8 +124,8 @@ void OwonOscilloscope::FlushConfigCache()
 }
 bool OwonOscilloscope::IsChannelEnabled(size_t i)
 {
-	if(i == m_extTrigChannel->GetIndex())
-		return false;
+	//if(i == m_extTrigChannel->GetIndex())
+	//	return false;
 
 	lock_guard<recursive_mutex> lock(m_cacheMutex);
 	return m_channelsEnabled[i];
@@ -308,6 +371,22 @@ size_t OwonOscilloscope::GetADCMode(size_t)
 void OwonOscilloscope::SetADCMode(size_t, size_t)
 {
 }
+
+std::string OwonOscilloscope::GetChannelColor(size_t i)
+{
+	// green-yellow (TODO: Higher channels)
+	switch(i % 2)
+	{
+		case 0:
+			return "#208020";
+
+		case 1:
+			return "#ffff00";
+		default:
+			return "#208020";
+	}
+}
+
 std::string OwonOscilloscope::GetDriverNameInternal()
 {
 	return "owon_vds";
